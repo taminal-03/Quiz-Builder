@@ -1,0 +1,650 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Builder</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    color: #222;
+}
+
+header {
+    background: #243b6b;
+    color: white;
+    text-align: center;
+    padding: 18px;
+}
+
+.box {
+    background: white;
+    max-width: 800px;
+    margin: 25px auto;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px #0002;
+}
+
+input, select {
+    width: 100%;
+    padding: 11px;
+    margin: 8px 0;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+}
+
+button {
+    background: #2855a6;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    margin: 6px 4px 6px 0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover { background: #173c80; }
+
+.hide { display: none; }
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    padding: 14px;
+    margin: 12px 0;
+    background: #fafcff;
+}
+
+.option {
+    display: block;
+    padding: 10px;
+    margin: 7px 0;
+    background: #f0f4fa;
+    border-radius: 5px;
+}
+
+.option input {
+    width: auto;
+    margin-right: 8px;
+}
+
+.result {
+    color: #176b35;
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Quiz Builder</h1>
+</header>
+
+<!-- LOGIN -->
+<div id="loginPage" class="box">
+    <h2>Login</h2>
+    <input id="adminUser" placeholder="Admin Username">
+    <input id="adminPass" type="password" placeholder="Admin Password">
+
+    <button onclick="adminLogin()">Admin Login</button>
+    <button onclick="showPage('signupPage')">Student Signup</button>
+    <button onclick="showPage('studentLoginPage')">Student Login</button>
+
+    <p>Demo Admin: admin / admin123</p>
+</div>
+
+<!-- STUDENT SIGNUP -->
+<div id="signupPage" class="box hide">
+    <h2>Student Signup</h2>
+    <input id="signupId" placeholder="Student ID">
+    <input id="signupName" placeholder="Student Name">
+    <input id="signupUser" placeholder="Username">
+    <input id="signupPass" type="password" placeholder="Password">
+
+    <button onclick="signup()">Create Account</button>
+    <button onclick="showPage('loginPage')">Back</button>
+</div>
+
+<!-- STUDENT LOGIN -->
+<div id="studentLoginPage" class="box hide">
+    <h2>Student Login</h2>
+    <input id="studentUser" placeholder="Username">
+    <input id="studentPass" type="password" placeholder="Password">
+
+    <button onclick="studentLogin()">Login</button>
+    <button onclick="showPage('loginPage')">Back</button>
+</div>
+
+<!-- ADMIN PAGE -->
+<div id="adminPage" class="box hide">
+    <h2>Admin Module</h2>
+
+    <h3>Create Quiz</h3>
+    <input id="quizTitle" placeholder="Quiz Title">
+    <input id="quizTime" type="number" min="1" placeholder="Time in Minutes">
+
+    <select id="questionType" onchange="changeType()">
+        <option value="mcq">Multiple Choice</option>
+        <option value="tf">True / False</option>
+        <option value="fill">Fill in the Blank</option>
+    </select>
+
+    <input id="questionText" placeholder="Enter Question">
+    <input id="questionMarks" type="number" min="1" placeholder="Marks">
+
+    <div id="mcqFields">
+        <input id="opA" placeholder="Option A">
+        <input id="opB" placeholder="Option B">
+        <input id="opC" placeholder="Option C">
+        <input id="opD" placeholder="Option D">
+        <input id="correctMCQ" placeholder="Correct Answer (A/B/C/D)">
+    </div>
+
+    <div id="tfFields" class="hide">
+        <select id="correctTF">
+            <option value="True">True</option>
+            <option value="False">False</option>
+        </select>
+    </div>
+
+    <div id="fillFields" class="hide">
+        <input id="correctFill" placeholder="Correct Answer">
+    </div>
+
+    <button onclick="addQuestion()">Add Question</button>
+    <button onclick="saveQuiz()">Save Quiz</button>
+
+    <h3>Added Questions</h3>
+    <div id="questionList"></div>
+
+    <h3>Student Result History</h3>
+    <div id="adminResults"></div>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<!-- STUDENT PAGE -->
+<div id="studentPage" class="box hide">
+    <h2>Student Module</h2>
+    <p id="studentDetails"></p>
+
+    <h3>Available Quizzes</h3>
+    <div id="availableQuizzes"></div>
+
+    <h3>My Results</h3>
+    <div id="studentResults"></div>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<!-- QUIZ PAGE -->
+<div id="quizPage" class="box hide">
+    <h2 id="playingTitle"></h2>
+    <p id="timer"></p>
+    <p id="questionNumber"></p>
+    <h3 id="playingQuestion"></h3>
+    <p id="playingMarks"></p>
+
+    <div id="answerOptions"></div>
+
+    <input id="fillAnswer" class="hide"
+           placeholder="Enter your answer">
+
+    <button onclick="nextQuestion()" id="nextButton">
+        Next
+    </button>
+</div>
+
+<script>
+// DATA
+let students = JSON.parse(localStorage.getItem("qb_students") || "[]");
+let quizzes = JSON.parse(localStorage.getItem("qb_quizzes") || "[]");
+let results = JSON.parse(localStorage.getItem("qb_results") || "[]");
+
+let currentStudent = null;
+let questions = [];
+let currentQuiz = null;
+let questionIndex = 0;
+let obtainedMarks = 0;
+let totalMarks = 0;
+let timerInterval = null;
+let secondsLeft = 0;
+
+function saveData() {
+    localStorage.setItem("qb_students", JSON.stringify(students));
+    localStorage.setItem("qb_quizzes", JSON.stringify(quizzes));
+    localStorage.setItem("qb_results", JSON.stringify(results));
+}
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#39;"
+    }[c]));
+}
+
+function showPage(id) {
+    document.querySelectorAll(".box").forEach(page =>
+        page.classList.add("hide")
+    );
+    document.getElementById(id).classList.remove("hide");
+}
+
+function logout() {
+    clearInterval(timerInterval);
+    currentStudent = null;
+    currentQuiz = null;
+    showPage("loginPage");
+}
+
+// ADMIN LOGIN
+function adminLogin() {
+    if (
+        document.getElementById("adminUser").value === "admin" &&
+        document.getElementById("adminPass").value === "admin123"
+    ) {
+        showPage("adminPage");
+        displayQuestions();
+        displayAdminResults();
+    } else {
+        alert("Invalid admin username or password");
+    }
+}
+
+// STUDENT SIGNUP
+function signup() {
+    const id = document.getElementById("signupId").value.trim();
+    const name = document.getElementById("signupName").value.trim();
+    const username = document.getElementById("signupUser").value.trim();
+    const password = document.getElementById("signupPass").value;
+
+    if (!id || !name || !username || !password) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    if (students.some(s =>
+        s.id.toLowerCase() === id.toLowerCase() ||
+        s.username.toLowerCase() === username.toLowerCase()
+    )) {
+        alert("Student ID or username already exists");
+        return;
+    }
+
+    students.push({ id, name, username, password });
+    saveData();
+
+    alert("Account created successfully");
+    showPage("studentLoginPage");
+}
+
+// STUDENT LOGIN
+function studentLogin() {
+    const username = document.getElementById("studentUser").value.trim();
+    const password = document.getElementById("studentPass").value;
+
+    const student = students.find(s =>
+        s.username === username && s.password === password
+    );
+
+    if (!student) {
+        alert("Invalid student login");
+        return;
+    }
+
+    currentStudent = student;
+
+    document.getElementById("studentDetails").textContent =
+        "Student: " + student.name + " | ID: " + student.id;
+
+    showPage("studentPage");
+    displayQuizzes();
+    displayStudentResults();
+}
+
+// QUESTION TYPE
+function changeType() {
+    const type = document.getElementById("questionType").value;
+
+    document.getElementById("mcqFields").classList.toggle(
+        "hide", type !== "mcq"
+    );
+    document.getElementById("tfFields").classList.toggle(
+        "hide", type !== "tf"
+    );
+    document.getElementById("fillFields").classList.toggle(
+        "hide", type !== "fill"
+    );
+}
+
+// ADD QUESTION
+function addQuestion() {
+    const type = document.getElementById("questionType").value;
+    const text = document.getElementById("questionText").value.trim();
+    const marks = Number(document.getElementById("questionMarks").value);
+
+    if (!text || !Number.isFinite(marks) || marks <= 0) {
+        alert("Enter question and valid marks");
+        return;
+    }
+
+    let q = { type, text, marks };
+
+    if (type === "mcq") {
+        q.options = [
+            document.getElementById("opA").value.trim(),
+            document.getElementById("opB").value.trim(),
+            document.getElementById("opC").value.trim(),
+            document.getElementById("opD").value.trim()
+        ];
+        q.answer = document.getElementById("correctMCQ")
+            .value.trim().toUpperCase();
+
+        if (q.options.some(o => !o) ||
+            !["A", "B", "C", "D"].includes(q.answer)) {
+            alert("Fill all options and enter correct answer A/B/C/D");
+            return;
+        }
+    }
+
+    if (type === "tf") {
+        q.answer = document.getElementById("correctTF").value;
+    }
+
+    if (type === "fill") {
+        q.answer = document.getElementById("correctFill").value.trim();
+        if (!q.answer) {
+            alert("Enter the correct answer");
+            return;
+        }
+    }
+
+    questions.push(q);
+
+    document.getElementById("questionText").value = "";
+    document.getElementById("questionMarks").value = "";
+
+    ["opA", "opB", "opC", "opD", "correctMCQ", "correctFill"]
+        .forEach(id => document.getElementById(id).value = "");
+
+    displayQuestions();
+}
+
+function displayQuestions() {
+    const target = document.getElementById("questionList");
+
+    target.innerHTML = questions.length
+        ? questions.map((q, i) =>
+            `<div class="card">${i + 1}. ${escapeHTML(q.text)}
+             — ${q.marks} marks</div>`
+          ).join("")
+        : "<p>No questions added.</p>";
+}
+
+// SAVE QUIZ
+function saveQuiz() {
+    const title = document.getElementById("quizTitle").value.trim();
+    const minutes = Number(document.getElementById("quizTime").value);
+
+    if (!title || questions.length === 0 ||
+        !Number.isFinite(minutes) || minutes <= 0) {
+        alert("Enter quiz title, valid time and at least one question");
+        return;
+    }
+
+    quizzes.push({
+        id: Date.now().toString(),
+        title,
+        minutes,
+        questions: questions.map(q => ({ ...q }))
+    });
+
+    questions = [];
+    saveData();
+
+    document.getElementById("quizTitle").value = "";
+    document.getElementById("quizTime").value = "";
+
+    displayQuestions();
+    alert("Quiz saved successfully");
+}
+
+// AVAILABLE QUIZZES
+function displayQuizzes() {
+    const target = document.getElementById("availableQuizzes");
+
+    target.innerHTML = quizzes.length
+        ? quizzes.map(q => {
+            const total = q.questions.reduce((s, x) => s + x.marks, 0);
+            return `<div class="card">
+                <h3>${escapeHTML(q.title)}</h3>
+                <p>Total Questions: ${q.questions.length}</p>
+                <p>Total Marks: ${total}</p>
+                <p>Time: ${q.minutes} minutes</p>
+                <button onclick="startQuiz('${q.id}')">Start Quiz</button>
+            </div>`;
+        }).join("")
+        : "<p>No quizzes available.</p>";
+}
+
+// START QUIZ
+function startQuiz(id) {
+    currentQuiz = quizzes.find(q => q.id === id);
+    if (!currentQuiz) return;
+
+    questionIndex = 0;
+    obtainedMarks = 0;
+    totalMarks = currentQuiz.questions.reduce(
+        (sum, q) => sum + Number(q.marks), 0
+    );
+
+    document.getElementById("playingTitle").textContent =
+        currentQuiz.title;
+
+    showPage("quizPage");
+    displayCurrentQuestion();
+
+    clearInterval(timerInterval);
+    secondsLeft = currentQuiz.minutes * 60;
+    updateTimer();
+
+    timerInterval = setInterval(() => {
+        secondsLeft--;
+        updateTimer();
+
+        if (secondsLeft <= 0) {
+            clearInterval(timerInterval);
+            finishQuiz();
+        }
+    }, 1000);
+}
+
+function updateTimer() {
+    const min = Math.floor(Math.max(0, secondsLeft) / 60);
+    const sec = Math.max(0, secondsLeft) % 60;
+
+    document.getElementById("timer").textContent =
+        "Time: " + String(min).padStart(2, "0") + ":" +
+        String(sec).padStart(2, "0");
+}
+
+// DISPLAY QUESTION
+function displayCurrentQuestion() {
+    const q = currentQuiz.questions[questionIndex];
+
+    if (!q) {
+        finishQuiz();
+        return;
+    }
+
+    document.getElementById("questionNumber").textContent =
+        "Question " + (questionIndex + 1) + " of " +
+        currentQuiz.questions.length;
+
+    document.getElementById("playingQuestion").textContent = q.text;
+    document.getElementById("playingMarks").textContent =
+        "Marks: " + q.marks;
+
+    const options = document.getElementById("answerOptions");
+    const fill = document.getElementById("fillAnswer");
+
+    options.innerHTML = "";
+    fill.classList.add("hide");
+    fill.value = "";
+
+    if (q.type === "mcq") {
+        options.innerHTML = q.options.map((o, i) =>
+            `<label class="option">
+            <input type="radio" name="answer" value="${"ABCD"[i]}">
+            ${"ABCD"[i]}. ${escapeHTML(o)}
+            </label>`
+        ).join("");
+    } else if (q.type === "tf") {
+        options.innerHTML = ["True", "False"].map(value =>
+            `<label class="option">
+            <input type="radio" name="answer" value="${value}">
+            ${value}
+            </label>`
+        ).join("");
+    } else {
+        fill.classList.remove("hide");
+    }
+
+    document.getElementById("nextButton").textContent =
+        questionIndex === currentQuiz.questions.length - 1
+        ? "Submit Quiz" : "Next";
+}
+
+// CHECK ANSWER
+function nextQuestion() {
+    if (!currentQuiz) return;
+
+    const q = currentQuiz.questions[questionIndex];
+    let answer = "";
+
+    if (q.type === "fill") {
+        answer = document.getElementById("fillAnswer").value.trim();
+    } else {
+        const selected = document.querySelector(
+            'input[name="answer"]:checked'
+        );
+        answer = selected ? selected.value : "";
+    }
+
+    let correct;
+
+    if (q.type === "fill") {
+        correct = answer.toLowerCase() ===
+            String(q.answer).trim().toLowerCase();
+    } else {
+        correct = answer.toLowerCase() ===
+            String(q.answer).toLowerCase();
+    }
+
+    if (correct) {
+        obtainedMarks += Number(q.marks);
+    }
+
+    questionIndex++;
+
+    if (questionIndex >= currentQuiz.questions.length) {
+        finishQuiz();
+    } else {
+        displayCurrentQuestion();
+    }
+}
+
+// FINISH AND SAVE RESULT
+function finishQuiz() {
+    if (!currentQuiz) return;
+
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+    const percentage = totalMarks > 0
+        ? (obtainedMarks / totalMarks) * 100
+        : 0;
+
+    const result = {
+        studentId: currentStudent.id,
+        studentName: currentStudent.name,
+        quizTitle: currentQuiz.title,
+        marksObtained: Number(obtainedMarks.toFixed(2)),
+        totalMarks: Number(totalMarks.toFixed(2)),
+        percentage: Number(percentage.toFixed(2)),
+        date: new Date().toLocaleString()
+    };
+
+    results.push(result);
+    saveData();
+
+    currentQuiz = null;
+
+    alert(
+        "Quiz Completed!\n" +
+        "Marks: " + result.marksObtained + " / " +
+        result.totalMarks + "\n" +
+        "Percentage: " + result.percentage.toFixed(2) + "%"
+    );
+
+    showPage("studentPage");
+    displayQuizzes();
+    displayStudentResults();
+}
+
+// STUDENT RESULTS
+function displayStudentResults() {
+    const mine = results.filter(r =>
+        r.studentId === currentStudent.id
+    );
+
+    document.getElementById("studentResults").innerHTML =
+        mine.length
+        ? mine.slice().reverse().map(r =>
+            `<div class="card">
+                <h3>${escapeHTML(r.quizTitle)}</h3>
+                <p>Marks Obtained:
+                <span class="result">${r.marksObtained} / ${r.totalMarks}</span></p>
+                <p>Percentage:
+                <span class="result">${r.percentage.toFixed(2)}%</span></p>
+                <small>${escapeHTML(r.date)}</small>
+            </div>`
+          ).join("")
+        : "<p>No results yet. Attempt a quiz to see your marks.</p>";
+}
+
+// ADMIN RESULTS
+function displayAdminResults() {
+    const target = document.getElementById("adminResults");
+
+    target.innerHTML = results.length
+        ? results.slice().reverse().map(r =>
+            `<div class="card">
+                <h3>${escapeHTML(r.studentName)}
+                (${escapeHTML(r.studentId)})</h3>
+                <p>Quiz: ${escapeHTML(r.quizTitle)}</p>
+                <p>Marks Obtained:
+                <span class="result">${r.marksObtained} / ${r.totalMarks}</span></p>
+                <p>Percentage:
+                <span class="result">${r.percentage.toFixed(2)}%</span></p>
+                <small>${escapeHTML(r.date)}</small>
+            </div>`
+          ).join("")
+        : "<p>No student results available yet.</p>";
+}
+
+changeType();
+</script>
+
+</body>
+</html>
+```

@@ -1,0 +1,125 @@
+**\<!DOCTYPE html>**\
+**\<html>**\
+**\<head>**\&#xA;**&#x20;   \<title>Quiz Builder\</title>**\&#xA;**&#x20;   \<link rel="stylesheet" href="style.css">**\
+**\</head>**\
+**\<body>**\
+\
+**\<header>**\&#xA;**&#x20;   \<h1>Quiz Builder\</h1>**\
+**\</header>**\
+\
+**\<!-- LOGIN PAGE -->**\
+**\<div id="loginPage" class="box">**\&#xA;**&#x20;   \<h2>Login\</h2>**\
+\&#xA;**&#x20;   \<input id="loginUser" placeholder="Username">**\&#xA;**&#x20;   \<input id="loginPass" type="password" placeholder="Password">**\
+\&#xA;**&#x20;   \<button onclick="login()">Login\</button>**\
+\&#xA;**&#x20;   \<button onclick="show('signupPage')">Student Signup\</button>**\
+\&#xA;**&#x20;   \<button onclick="show('studentLoginPage')">**\&#xA;**&#x20;       Student Login**\&#xA;**&#x20;   \</button>**\
+**\</div>**\
+\
+\
+**\<!-- STUDENT SIGNUP -->**\
+**\<div id="signupPage" class="box hide">**\&#xA;**&#x20;   \<h2>Student Signup\</h2>**\
+\&#xA;**&#x20;   \<input id="studentId" placeholder="Student ID">**\&#xA;**&#x20;   \<input id="studentName" placeholder="Student Name">**\&#xA;**&#x20;   \<input id="signUser" placeholder="Username">**\&#xA;**&#x20;   \<input id="signPass" type="password" placeholder="Password">**\
+\&#xA;**&#x20;   \<button onclick="signup()">Create Account\</button>**\
+\&#xA;**&#x20;   \<button onclick="show('loginPage')">**\&#xA;**&#x20;       Back to Login**\&#xA;**&#x20;   \</button>**\
+**\</div>**\
+\
+\
+**\<!-- STUDENT LOGIN -->**\
+**\<div id="studentLoginPage" class="box hide">**\
+\&#xA;**&#x20;   \<h2>Student Login\</h2>**\
+\&#xA;**&#x20;   \<input id="studentLoginUser" placeholder="Username">**\
+\&#xA;**&#x20;   \<input id="studentLoginPass"**\&#xA;**&#x20;          type="password"**\&#xA;**&#x20;          placeholder="Password">**\
+\&#xA;**&#x20;   \<button onclick="studentLogin()">**\&#xA;**&#x20;       Student Login**\&#xA;**&#x20;   \</button>**\
+\&#xA;**&#x20;   \<button onclick="show('loginPage')">**\&#xA;**&#x20;       Back to Login**\&#xA;**&#x20;   \</button>**\
+\
+**\</div>**\
+\
+\
+**\<!-- ADMIN MODULE -->**\
+**\<div id="adminPage" class="box hide">**\
+\&#xA;**&#x20;   \<h2>Admin Module\</h2>**\
+\&#xA;**&#x20;   \<input id="quizTitle" placeholder="Quiz Title">**\
+\&#xA;**&#x20;   \<input id="quizTime"**\&#xA;**&#x20;          type="number"**\&#xA;**&#x20;          placeholder="Time in Minutes">**\
+\
+\&#xA;**&#x20;   \<select id="type" onchange="changeType()">**\
+\&#xA;**&#x20;       \<option value="mcq">**\&#xA;**&#x20;           Multiple Choice**\&#xA;**&#x20;       \</option>**\
+\&#xA;**&#x20;       \<option value="tf">**\&#xA;**&#x20;           True / False**\&#xA;**&#x20;       \</option>**\
+\&#xA;**&#x20;       \<option value="fill">**\&#xA;**&#x20;           Fill in the Blank**\&#xA;**&#x20;       \</option>**\
+\&#xA;**&#x20;   \</select>**\
+\
+\&#xA;**&#x20;   \<input id="question"**\&#xA;**&#x20;          placeholder="Enter Question">**\
+\&#xA;**&#x20;   \<input id="marks"**\&#xA;**&#x20;          type="number"**\&#xA;**&#x20;          placeholder="Marks">**\
+\
+\&#xA;**&#x20;   \<!-- MCQ -->**\&#xA;**&#x20;   \<div id="mcqFields">**\
+\&#xA;**&#x20;       \<input id="op1"**\&#xA;**&#x20;              placeholder="Option A">**\
+\&#xA;**&#x20;       \<input id="op2"**\&#xA;**&#x20;              placeholder="Option B">**\
+\&#xA;**&#x20;       \<input id="op3"**\&#xA;**&#x20;              placeholder="Option C">**\
+\&#xA;**&#x20;       \<input id="op4"**\&#xA;**&#x20;              placeholder="Option D">**\
+\&#xA;**&#x20;       \<input id="correct"**\&#xA;**&#x20;              placeholder="Correct Answer A/B/C/D">**\
+\&#xA;**&#x20;   \</div>**\
+\
+\&#xA;**&#x20;   \<!-- TRUE FALSE -->**\&#xA;**&#x20;   \<div id="tfFields" class="hide">**\
+\&#xA;**&#x20;       \<select id="tfAnswer">**\
+\&#xA;**&#x20;           \<option>True\</option>**\
+\&#xA;**&#x20;           \<option>False\</option>**\
+\&#xA;**&#x20;       \</select>**\
+\&#xA;**&#x20;   \</div>**\
+\
+\&#xA;**&#x20;   \<!-- FILL -->**\&#xA;**&#x20;   \<div id="fillFields" class="hide">**\
+\&#xA;**&#x20;       \<input id="fillAnswer"**\&#xA;**&#x20;              placeholder="Correct Answer">**\
+\&#xA;**&#x20;   \</div>**\
+\
+\&#xA;**&#x20;   \<button onclick="addQuestion()">**\&#xA;**&#x20;       Add Question**\&#xA;**&#x20;   \</button>**\
+\&#xA;**&#x20;   \<button onclick="saveQuiz()">**\&#xA;**&#x20;       Save Quiz**\&#xA;**&#x20;   \</button>**\
+\
+\&#xA;**&#x20;   \<h3>Added Questions\</h3>**\
+\&#xA;**&#x20;   \<div id="questionList">\</div>**\
+\
+\&#xA;**&#x20;   \<h3>Student Result History\</h3>**\
+\&#xA;**&#x20;   \<div id="history">\</div>**\
+\
+\&#xA;**&#x20;   \<button onclick="logout()">**\&#xA;**&#x20;       Logout**\&#xA;**&#x20;   \</button>**\
+\
+**\</div>**\
+\
+\
+**\<!-- STUDENT MODULE -->**\
+**\<div id="userPage" class="box hide">**\
+\&#xA;**&#x20;   \<h2>Student Module\</h2>**\
+\&#xA;**&#x20;   \<input id="writeId"**\&#xA;**&#x20;          placeholder="Student ID">**\
+\&#xA;**&#x20;   \<input id="writeName"**\&#xA;**&#x20;          placeholder="Student Name">**\
+\
+\&#xA;**&#x20;   \<h3>Available Quizzes\</h3>**\
+\&#xA;**&#x20;   \<div id="quizList">\</div>**\
+\
+\&#xA;**&#x20;   \<h3>My Results\</h3>**\
+\&#xA;**&#x20;   \<div id="myResults">\</div>**\
+\
+\&#xA;**&#x20;   \<button onclick="logout()">**\&#xA;**&#x20;       Logout**\&#xA;**&#x20;   \</button>**\
+\
+**\</div>**\
+\
+\
+**\<!-- QUIZ PAGE -->**\
+**\<div id="quizPage" class="box hide">**\
+\&#xA;**&#x20;   \<div class="top">**\
+\&#xA;**&#x20;       \<h2 id="playTitle">\</h2>**\
+\&#xA;**&#x20;       \<b id="timer">**\&#xA;**&#x20;           Time: 00:00**\&#xA;**&#x20;       \</b>**\
+\&#xA;**&#x20;   \</div>**\
+\
+\&#xA;**&#x20;   \<p id="questionNumber">\</p>**\
+\&#xA;**&#x20;   \<h3 id="playQuestion">\</h3>**\
+\&#xA;**&#x20;   \<p id="questionMarks">\</p>**\
+\
+\&#xA;**&#x20;   \<div id="playOptions">\</div>**\
+\
+\&#xA;**&#x20;   \<input id="fillInput"**\&#xA;**&#x20;          class="hide"**\&#xA;**&#x20;          placeholder="Write your answer">**\
+\
+\&#xA;**&#x20;   \<button onclick="submitAnswer()">**\&#xA;**&#x20;       Next**\&#xA;**&#x20;   \</button>**\
+\
+**\</div>**\
+\
+\
+**\<script src="script.js">\</script>**\
+**\</body>**\
+**\</html>          can you please make this code smaller than smaller and give me for exam prepration in easy way**
